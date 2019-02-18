@@ -1,0 +1,135 @@
+<script src="../simpletest.js"></script>
+<script>
+
+(function() {
+
+  var libraryStorage = {};
+
+  function librarySystem (libraryName, dependentArray, callback) {
+	// Create a library
+	if (arguments.length > 1) {
+	  // Library is in array
+	  // Clear library if it exists already
+	  if (libraryStorage[libraryName] !== undefined) {
+	  	delete libraryStorage[libraryName];
+	  }
+	  if (dependentArray.length > 0) {
+		libraryStorage.savedCallback = callback;
+        libraryStorage.newArray = [];
+        for (var i = 0; i < dependentArray.length; i++) {
+          libraryStorage.newArray.push(dependentArray[i]);
+        }
+      } else {
+	      // No library in Array
+	      libraryStorage[libraryName] = callback();
+	  } 
+    } else {
+	    // Run the code (array === 1)
+		// If library hasnt been written to storage yet
+	    if(libraryStorage[libraryName] === undefined) {
+		  //need to get values from array
+		   var finalArray = [];
+		 for (var i = 0; i < libraryStorage.newArray.length; i++) {
+		   var savedArray = libraryStorage.newArray[i];
+			finalArray.push(libraryStorage[savedArray])
+        }
+		  libraryStorage[libraryName] = libraryStorage.savedCallback.apply(this, finalArray);
+		    // run the callback function
+		   return libraryStorage[libraryName];
+		} else {
+	       // Run the function
+	       return libraryStorage[libraryName];
+        }
+    }
+  }
+  
+  window.librarySystem = librarySystem;  
+
+})();
+
+//Tests
+// If library array is empty, callBack should run only once
+// If library array is has libraries, callBack should run only once
+// It should use arrays containing existing libraries
+// Creating a new library with the same property, will overwrite the old library
+// Libraries can be created out of order
+
+tests({
+
+	'Using 3 variables will create, but not run the function':
+
+	'Using one variable will run the library'
+
+	'If library array is empty, callBack should run once': function() {
+		var callbackHasRun = 0;
+		librarySystem ('abc', [], function() {
+			callbackHasRun++;
+			return '123';
+		});
+		librarySystem ('abc');
+		librarySystem ('abc');
+		eq(callbackHasRun, 1);
+	},
+
+	'If library array is has libraries, callBack should run once': function() {
+		var callbackHasRun = 0;
+		librarySystem ('def', ['abc'], function() {
+			callbackHasRun++;
+			return '456';
+		});
+		librarySystem ('def');
+		librarySystem ('def');
+		eq(callbackHasRun, 1);
+	},
+
+	'It should use arrays containing existing libraries': function() {
+		  	librarySystem ('a', [], function(){
+		   		return 'Were the';
+		  	})
+
+		  	librarySystem ('b', [], function(){
+		  		return 'pride of';
+		  	})
+
+
+		  	librarySystem ('c', ['a', 'b'], function(a, b) {
+		  		return a + ' ' + b + ' ' + 'South Australia';
+		  	})
+
+		  	eq(librarySystem('c'), 'Were the pride of South Australia')
+
+	},
+
+	'Creating a new library with the same property, will overwrite the old library': function() {
+			librarySystem ('a', [], function(){
+		   		return 'Adelaide';
+		  	})
+
+		  	librarySystem ('a', [], function(){
+		  		return 'Crows';
+		  	})
+
+		  	eq(librarySystem('a'), 'Crows')
+	},
+
+
+	'Libraries can be created out of order': function() {
+	  	librarySystem ('c', ['a', 'b'], function(a, b) {
+	  	 return a + ' ' + b + ' ' + 'Crows';
+	  	})
+	  	
+	  	librarySystem ('a', [], function(){
+	   		return 'Were the';
+	  	})
+
+	  	librarySystem ('b', [], function(){
+	  		return 'mighty Adelaide';
+	  	})
+
+	  	eq(librarySystem('c'), 'Were the mighty Adelaide Crows')
+
+	},
+
+
+	});
+</script>

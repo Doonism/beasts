@@ -1,0 +1,95 @@
+<script src="../simpletest.js"></script>
+<script>
+
+function isPrototypeOf (callingObject, objectYouWantToTest) {
+  if (callingObject == undefined || null) {
+  	throw new TypeError('Cannot read property \'isPrototypeOf\' of ' + callingObject);
+  }
+  var prototypeObject = Object.getPrototypeOf (objectYouWantToTest);
+    if(callingObject === prototypeObject) {
+      return true;
+    } else {
+    	//If there are more prototype links in the chain
+        if(prototypeObject !== null){
+        // Recurse through next chain link
+      	result = isPrototypeOf(callingObject, prototypeObject);
+        } else {
+        // End of chain, no match
+            return false
+        }
+      }
+
+  return result;	    
+}
+
+
+tests({
+
+	'It should return a boolean value': function() {
+	  var dog = {};	
+	  var myDog = Object.create(dog);
+
+	  var result = isPrototypeOf(dog, myDog);
+
+      eq(typeof result, 'boolean')
+	},
+
+	'If calling object is not a prototype of the object you are testing, return false': function() {
+	  var dog = {};	
+	  var myDog = Object.create(null);
+
+	  var result = isPrototypeOf(dog, myDog);
+
+      eq(result, false)
+	},
+
+	'Calling objects can be multiple prototype links away from testing object and return true': function() {
+	  var dog = {};
+	  var canine = Object.create(dog)
+	  var myDog = Object.create(canine)
+
+	  var result = isPrototypeOf(dog, myDog);
+
+	  eq(result, true)
+	},
+
+	'If calling object is a prototype of the object you are testing, return true': function() {
+	  var dog = {};	
+	  var myDog = Object.create(dog);
+
+	  var result = isPrototypeOf(dog, myDog);
+
+      eq(result, true)
+	},
+
+	'Object.prototype should be a prototype of the object being tested': function() {
+	  var dog = {}
+
+	  var result = isPrototypeOf(Object.prototype, dog)
+
+	  eq(result, true)
+	},
+
+	'If originalObject is null throw typeError': function() {
+	  var isTypeError = false;
+	  var nullArray = null;
+	    try {
+		  isPrototypeOf(nullArray);
+	    } catch(e) {
+	       isTypeError = (e instanceof TypeError);
+	    }
+	    eq(isTypeError, true);	
+	},
+
+	'If originalObject is undefined throw typeError': function() {
+	  var isTypeError = false;
+	  var nullArray = undefined;
+	    try {
+		  isPrototypeOf(nullArray);
+	    } catch(e) {
+	       isTypeError = (e instanceof TypeError);
+	    }
+	    eq(isTypeError, true);	
+	}
+})	 
+</script>

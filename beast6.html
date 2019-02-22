@@ -1,0 +1,151 @@
+<script src="simpletest.js"></script>
+<script>
+
+	var toFixed = function(value, precision) {
+
+		var stringValue;
+		var preDecimalString;
+		var postDecimalString;
+		var combinedString;
+		var final;
+		var reDecimal;
+		var round;
+
+		stringValue = value.toString();
+
+		//Precision too large
+		if (precision > 20) {
+		  final = value + 'e' + '+' + precision; 
+	      return final;
+		}
+
+		// Where precision is not a number
+		if (typeof precision !== 'number'){
+		  precision = 0;
+		}
+
+		//Remove numbers prior to decimal and save as variable
+		if (stringValue.includes('.')){
+		  preDecimalString = stringValue.match(/^(.*?)\./g).toString();
+		  //Remove decimal from string
+		  preDecimalString = preDecimalString.substring(0, preDecimalString.length - 1);
+		} else {
+		    // Case for whole numbers
+		    preDecimalString = stringValue;
+		}
+		// Case where decimals are not required
+		if (precision === 0) {
+          final = Math.round(value);
+          return final.toString();
+        }
+		//Post decimal number string, save as variable
+		postDecimalString = stringValue.substring(preDecimalString.length + 1);
+		
+		// Fix edge case. Add decimals to strings, where precision > postDecimalString.length (i.e need more decimal places)
+		if(postDecimalString.length < precision) {
+		    for (var i = postDecimalString.length; i < precision; i++){
+		      postDecimalString = postDecimalString += 0;
+            }
+        }
+		combinedString = preDecimalString + postDecimalString;
+		//Replace the decimal
+		reDecimal = combinedString.substring(0, precision + preDecimalString.length) + '.' + combinedString.substring(precision + preDecimalString.length);
+
+		// Remove negative number
+		if (reDecimal < 0) {
+		  reDecimal = Math.abs(reDecimal);
+		}
+		round = Math.round(reDecimal).toString();
+		//Fix edge case where round removed 0's on decimals
+		if (value < 1 && value > 0){
+	      if (round.length <= precision) {
+		    for (var i = round.length; i < precision + 1; i++){
+		      round = 0 + round;
+			}
+		  }
+		} 
+		// negative number
+		if (value < 0) {
+		  //Fix negative integer edge case where unit is carried across from units to tens for example.
+		  if(Math.abs(combinedString[1]) > round [0]) {
+	        round = round + '0';
+		    final = '-' + round.substring(0, preDecimalString.length) + '.'
+		    + round.substring(preDecimalString.length, preDecimalString.length + precision);
+		    return final;
+		  } else {
+	          final = '-' + round.substring(0, preDecimalString.length - 1) + '.' + round.substring(preDecimalString.length - 1);
+	          return final;
+	      }
+		  //Fix positive integer edge case where unit is carried across from units to tens for example.
+	    } else if (combinedString[0] > round[0]) {
+	        round = round + '0';
+	        final = round.substring(0, preDecimalString.length + 1) + '.' 
+	        + round.substring(preDecimalString.length + 1, preDecimalString.length + precision + 1);
+	        return final;
+	    } else {
+	        //Reassign decimal for regular cases.
+	        final = round.substring(0, preDecimalString.length) + '.' + round.substring(preDecimalString.length);
+	        return final;
+	    }
+	}
+
+tests({
+	'Test case 1: Should round 0.615': function() {
+	   var fixed = toFixed(0.615, 2);
+	   eq(fixed, '0.62');
+	},
+
+	'Test case 2: Should round 10.235': function() {
+	   var fixed = toFixed(10.235, 2);
+	   eq(fixed, '10.24');
+	},
+
+	'Test case 3: Should round 1.005': function() {
+	   var fixed = toFixed(1.005, 2);
+	   eq(fixed, '1.01');
+	},
+	
+    'It should round negatives': function() {
+	  var fixed = toFixed(-9.05, 1);
+	  eq(fixed, '-9.1');
+	},
+
+	'It should round where we carry a unit': function() {
+	  var fixed = toFixed(9.99, 1);
+	  eq(fixed, '10.0');	
+	},
+
+	'It should round negatives where we carry a unit': function() {
+	  var fixed = toFixed(-9.99, 1);
+	  eq(fixed, '-10.0');	
+	},
+
+
+	'It should round where precision is 0': function() {
+	  var fixed = toFixed(7.45, 0);
+	  eq(fixed, '7');	
+	},
+	
+	'It should round for decimals with a 0 integer': function () {
+	  var fixed = toFixed(0.0005, 3);
+	  eq(fixed, '0.001');
+	},
+
+	'It should round when precision is greater than values decimal length': function () {
+	  var fixed = toFixed(1.05, 7);
+	  eq(fixed, '1.0500000');	
+	},
+
+	'If precision variable is greater than 20, return as an exponential': function() {
+	  var fixed = toFixed(9.99, 21);
+	  eq(fixed, '9.99e+21');
+	},
+
+	'If precision is anything but a number, make precision 0': function() {
+	  var fixed = toFixed(9.99, {});
+	  eq(fixed, '10');	
+	  var fixed = toFixed(9.99, null);
+	  eq(fixed, '10');	
+	}
+	});
+</script>
